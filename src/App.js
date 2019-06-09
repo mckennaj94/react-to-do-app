@@ -1,26 +1,66 @@
-import React from 'react';
-import logo from './logo.svg';
+import React, { Component } from 'react';
+import { BrowserRouter as Router, Route} from 'react-router-dom';
+import ToDos from './components/ToDos';
+import AddToDo from './components/AddToDo';
+import About from './components/pages/About';
+import Header from './components/layout/Header';
+import axios from 'axios';
+
 import './App.css';
 
-function App() {
+class App extends Component{
+  state = {
+    toDos: []
+  }
+
+  componentDidMount() {
+    axios.get('https://jsonplaceholder.typicode.com/todos?_limit=10')
+    .then(res => this.setState({ toDos: res.data}))
+  }
+
+  //Toggle Complete
+  markComplete = (id) => {
+    this.setState({ toDos: this.state.toDos.map(todo => {
+      if(todo.id === id){
+        todo.completed = !todo.completed
+      }
+      return todo;
+    })})}
+
+    //Delete ToDo
+    delToDo = (id) => {
+      axios.delete(`https://jsonplaceholder.typicode.com/todos/${id}`)
+      .then(res => this.setState({ toDos: [...this.state.toDos.filter(todo => todo.id !== id)] }))}
+
+    //Add ToDo
+    addToDo = (title) => {
+      axios.post('https://jsonplaceholder.typicode.com/todos', {
+        title,
+        completed: false
+      }).then(res => this.setState({ toDos: [...this.state.toDos, res.data]}))}
+
+  render() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <div className="App">
+        <div className="container">
+          <Header/>
+          <Route exact path="/" render={props => (
+            <React.Fragment>
+              <AddToDo addToDo={this.addToDo}/>
+              <ToDos 
+                toDos={this.state.toDos} 
+                markComplete={this.markComplete} 
+                delToDo={this.delToDo}
+                />
+            </React.Fragment>
+          )} />
+          <Route path="/about" component={About}/>
+        </div>
+      </div>
+    </Router>
   );
+  }
 }
 
 export default App;
